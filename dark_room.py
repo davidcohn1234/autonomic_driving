@@ -7,11 +7,12 @@ from datetime import datetime
 import os
 from robomaster import robot
 import queue
-# import threading
 import glob
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from threading import Thread
+import gdown
+import common_utils
 
 
 class MyVideoCapture:
@@ -55,6 +56,9 @@ class DarkRoom:
         self.max_eps = 80
         self.cameras_names = ['UOXBGL', 'TGASLM', 'VSYAJL', 'IGXJVS']
         self.cameras_IPs = ['192.168.0.233', '192.168.0.76', '192.168.0.79', '192.168.0.55']
+        self.videos_and_images_folder = './videos_and_images'
+        self.download_input_videos_from_google_drive(self.videos_and_images_folder)
+        common_utils.extract_frames_from_videos(self.videos_and_images_folder)
         self.writePNGs = True
         self.counter = 0
         self.images_output_folder_with_data = self.create_output_folders()
@@ -110,6 +114,37 @@ class DarkRoom:
         self.waiting_for_completed = False
         self.first_time_moving = True
         #self.init_pitch_control()
+
+    def download_input_videos_from_google_drive(self, videos_and_images_folder):
+        videos_sub_folder_name = 'videos'
+        videos_sub_folder_full_path = videos_and_images_folder + '/' + videos_sub_folder_name
+
+        is_folder_exist = os.path.exists(videos_sub_folder_full_path)
+        if is_folder_exist:
+            return
+        else:
+            os.makedirs(videos_sub_folder_full_path)
+
+        google_drive_prefix_url = 'https://drive.google.com/uc?id='
+
+        url1_id_UOXBGL = '1-0STdItDTaGQbmMfrljidEZdaDhsqfw1'
+        url2_id_TGASLM = '1cEb91AWmzwiNN4q55ghYcTUIdQM3Jo4s'
+        url3_id_VSYAJL = '1S9wYkk_6vm17fsbaj6keftYsqtTuodmi'
+        url4_id_IGXJVS = '170dVWpcfFjLaBjQKRvXT0Njx-NdgCqeE'
+
+        url_ids = [url1_id_UOXBGL, url2_id_TGASLM, url3_id_VSYAJL, url4_id_IGXJVS]
+
+        num_of_videos = len(self.cameras_names)
+
+        for video_index in range(0, num_of_videos):
+            video_name = self.cameras_names[video_index] + '.avi'
+            print()
+            print(f'Downloading video number {video_index + 1} out of {num_of_videos}. video name: {video_name}')
+            url_id = url_ids[video_index]
+            url = google_drive_prefix_url + url_id
+            output = videos_sub_folder_full_path + '/' + video_name
+            gdown.download(url, output, quiet=False)
+        print('Finished downloading all videos')
 
     def init_pitch_control(self):
         t = Thread(target=self.special_move_at_incline)
