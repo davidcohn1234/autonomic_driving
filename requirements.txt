@@ -1,0 +1,6 @@
+opencv-python
+opencv-contrib-python
+robomaster
+shapely
+scikit-image
+imutils
