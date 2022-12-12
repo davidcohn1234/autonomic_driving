@@ -51,13 +51,13 @@ class DarkRoom:
         self.sim_with_room_frame = True
         self.work_with_real_robot = False
         self.use_time_sleep = not self.sim_with_room_frame
-        self.path4simframes = './videos_with_aruco_13_11_2022/images/'
+        self.path4simframes = './videos_and_images/images/'
         self.max_eps = 80
         self.cameras_names = ['UOXBGL', 'TGASLM', 'VSYAJL', 'IGXJVS']
         self.cameras_IPs = ['192.168.0.233', '192.168.0.76', '192.168.0.79', '192.168.0.55']
         self.writePNGs = True
         self.counter = 0
-        self.images_output_folder_original, self.images_output_folder_with_data, self.images_output_folder_base = self.create_output_folders()
+        self.images_output_folder_with_data = self.create_output_folders()
         self.vcaps_list = self.initialize_vcaps()
         self.ninja1 = self.initialize_robot()
         self.num_of_cameras = len(self.vcaps_list)
@@ -205,14 +205,15 @@ class DarkRoom:
 
     def create_output_folders(self):
         now = datetime.now()
-        now = now.strftime("%H_%M_%S_%f")
-        images_output_folder_original = './Blind_rally/' + now + '/original'
-        images_output_folder_with_data = './Blind_rally/' + now + '/with_data'
-        images_output_folder_base = './Blind_rally/' + now + '/base'
-        self.create_folder_if_not_exist(images_output_folder_original)
+        now = now.strftime("date_%m_%d_%Y__time_%H_%M_%S")
+        output_folder = './autonomic_driving_output'
+        #images_output_folder_original = output_folder + '/' + now + '/original'
+        images_output_folder_with_data = output_folder + '/' + now
+        #images_output_folder_base = output_folder + '/' + now + '/base'
+        #self.create_folder_if_not_exist(images_output_folder_original)
         self.create_folder_if_not_exist(images_output_folder_with_data)
-        self.create_folder_if_not_exist(images_output_folder_base)
-        return images_output_folder_original, images_output_folder_with_data, images_output_folder_base
+        #self.create_folder_if_not_exist(images_output_folder_base)
+        return images_output_folder_with_data
 
 
     def create_folder_if_not_exist(self, folder_full_path):
@@ -877,8 +878,10 @@ class DarkRoom:
             num_of_waypoints_left_for_the_robot = num_of_waypoints_in_full_path - waypoint_index
             waypoints_lengths[camera_index] = num_of_waypoints_left_for_the_robot
         if np.sum(waypoints_lengths) == 0:
-            print('error')
-            david = 5
+            #The robot might be seen in more than one camera. So you can randomly pick a camera.
+            for first_index_not_none in range(0, len(robot_positions_in_all_cameras_by_aruco)):
+                if robot_positions_in_all_cameras_by_aruco[first_index_not_none] is not None:
+                    return first_index_not_none
         new_active_camera = np.argmax(waypoints_lengths)
         # if current_active_camera != new_active_camera and current_active_camera >= 0:
         #     cameras_where_robot_finished[current_active_camera] = True
