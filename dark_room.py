@@ -263,8 +263,6 @@ class DarkRoom:
         return frame, frame_with_frame_index
 
     def get_eps(self, next_WP, current_robo_pos):
-        if next_WP is None or current_robo_pos is None:
-            david = 5
         dist = np.linalg.norm(next_WP - current_robo_pos)
         return dist
 
@@ -338,25 +336,9 @@ class DarkRoom:
                 self.waiting_for_completed = True
                 self.ninja1.chassis.move(x=0, y=0, z=azimuth, z_speed=100).wait_for_completed()
                 self.waiting_for_completed = False
-                # #time.sleep(2)
-                # sleep_time_move_forward = num_of_meters / speed_x
-                # self.ninja1.chassis.drive_speed(speed_x, 0, 0)
-                # time.sleep(sleep_time_move_forward)
-                # if not self.moving_in_pitch:
-                #     self.ninja1.chassis.drive_speed(0, 0, 0)
-                #     # time.sleep(1)
-                # david = 5
+
 
                 self.waiting_for_completed = True
-                #if self.first_time_moving:
-                #     print('david1')
-                #     self.ninja1.chassis.drive_speed(1, 0, 0, timeout=7)
-                #     time.sleep(8)
-                #     self.ninja1.chassis.drive_speed(1, 0, 90)
-                #     time.sleep(1)
-                #     self.first_time_moving = False
-                # else:
-                #     print('david2')
                 if self.current_waypoint_index == (len(self.waypoints_for_all_cameras[self.active_camera_index]) - 1) and self.active_camera_index == 0:
                     self.ninja1.chassis.move(x=0, y=0, z=5, z_speed=100).wait_for_completed()
                     print('driving faaaaaast!')
@@ -369,13 +351,6 @@ class DarkRoom:
                 else:
                     self.ninja1.chassis.move(x=num_of_meters, y=0, z=0, xy_speed=1).wait_for_completed()
                 self.waiting_for_completed = False
-            #david = 5
-            # is_bridge = self.ninja1.check_isInFrontOfridge()
-            # if is_bridge:
-            #     print('there is bridge')
-            # else:
-            #     print('no bridge')
-            # time.sleep(2)
 
     def create_rgb_image_with_data(self, rgb_image, single_WP, body_pix, prev_best_robo_pos, waypoints, Az, robot_data, eps):
         rgb_image_with_data = rgb_image.copy()
@@ -444,102 +419,6 @@ class DarkRoom:
         resized_rgb_image = cv2.resize(rgb_image, dim, interpolation=interpolation_method)
         return resized_rgb_image
 
-    # def show_and_save_image(self, rgb_image_base, new_frame, new_frame_with_frame_index, single_WP,
-    #                         robot_position_in_active_camera, prev_best_robo_pos, WP_list, Az, robot_data,
-    #                         active_camera_name, eps):
-    #     new_frame_with_data = self.create_rgb_image_with_data(new_frame_with_frame_index, single_WP,
-    #                                                      robot_position_in_active_camera, prev_best_robo_pos, WP_list,
-    #                                                      Az, robot_data, eps)
-    #     self.counter += 1
-    #     file_full_path_original = "{}/{:05d}.jpg".format(self.images_output_folder_original, self.counter + 1)
-    #     cv2.imwrite(file_full_path_original, new_frame)
-    #
-    #     file_full_path_with_data = "{}/{:05d}.jpg".format(self.images_output_folder_with_data, self.counter + 1)
-    #     cv2.imwrite(file_full_path_with_data, new_frame_with_data)
-    #
-    #     file_full_path_base = "{}/{:05d}.jpg".format(self.images_output_folder_base, self.counter + 1)
-    #     cv2.imwrite(file_full_path_base, rgb_image_base)
-    #
-    #     cv2.imshow('new_frame_with_data', new_frame_with_data)
-    #     cv2.waitKey(1)
-
-    # def move_robot_to_next_waypoint_along_active_camera(self,
-    #                                                     start_location,
-    #                                                     rgb_image_for_active_camera,
-    #                                                     rgb_image_for_active_camera_with_frame_index,
-    #                                                     waypoints,
-    #                                                     robot_current_position,
-    #                                                     robot_current_unit_direction):
-    #
-    #     max_azimuth = 45
-    #     waypoint_index = self.start_waypoint_indexes[self.active_camera_index]
-    #     rgb_image_base = self.base_cameras_frames[self.active_camera_index]
-    #     if waypoint_index >= len(waypoints):
-    #         return robot_current_position
-    #     single_WP = waypoints[waypoint_index]
-    #     # robot_current_position = wpd.get_robot_position(rgb_image_base, rgb_image_for_active_camera, self.first_camera_index, self.active_camera_index, start_location, robot_data)
-    #     # robot_position_in_active_camera = robot_data['robot_mean_of_front_and_back_mean_locations']
-    #     eps = self.get_eps(single_WP, robot_current_position)
-    #
-    #     # in case the robot moved too much in a single step so we want to update the closest waypoint to the robot
-    #     while waypoint_index < len(waypoints) - 1:
-    #         next_waypoint = waypoints[waypoint_index + 1]
-    #         dist = self.get_eps(next_waypoint, robot_current_position)
-    #         if dist < eps:
-    #             single_WP = next_waypoint
-    #             waypoint_index += 1
-    #             eps = dist
-    #         else:
-    #             break
-    #
-    #     direction_from_robot_to_next_waypoint = single_WP - robot_current_position
-    #     Az = self.handle_robot_rotation(robot_current_unit_direction, direction_from_robot_to_next_waypoint)
-    #
-    #     active_camera_name = self.cameras_names[self.active_camera_index]
-    #     new_frame = rgb_image_for_active_camera
-    #     new_frame_with_frame_index = rgb_image_for_active_camera_with_frame_index
-    #     while eps < self.max_eps:
-    #         waypoint_index += 1
-    #         if waypoint_index >= len(waypoints):
-    #             self.start_waypoint_indexes[self.active_camera_index] = waypoint_index
-    #             #self.cameras_where_robot_finished[self.active_camera_index] = True
-    #             return robot_current_position
-    #         single_WP = waypoints[waypoint_index]
-    #         eps = self.get_eps(single_WP, robot_current_position)
-    #
-    #     while eps > self.max_eps:
-    #         if self.use_time_sleep:
-    #             time.sleep(0.1)
-    #         robot_data = wpd.get_robot_info(new_frame)
-    #         robot_current_position = wpd.get_robot_position(rgb_image_base, new_frame, self.first_camera_index,
-    #                                                         self.active_camera_index, start_location, robot_data)
-    #         direction_from_robot_to_next_waypoint = single_WP - robot_current_position
-    #         prev_best_robo_pos = robot_current_position
-    #         Az = self.handle_robot_rotation(robot_current_unit_direction, direction_from_robot_to_next_waypoint)
-    #         if not self.sim_with_room_frame:
-    #             self.move_robot(Az, eps)
-    #         if self.writePNGs:
-    #             self.show_and_save_image(rgb_image_base, new_frame, new_frame_with_frame_index, single_WP,
-    #                                 robot_current_position, prev_best_robo_pos, waypoints, Az, robot_data,
-    #                                 active_camera_name, eps)
-    #         self.frame_index += 1
-    #         all_cameras_frames, cameras_frames_with_frame_index = self.get_cameras_frames(self.frame_index)
-    #         new_frame = all_cameras_frames[self.active_camera_index]
-    #         new_frame_with_frame_index = cameras_frames_with_frame_index[self.active_camera_index]
-    #         robot_data = wpd.get_robot_info(new_frame)
-    #
-    #         robot_prev_position = robot_current_position
-    #         robot_current_position = wpd.get_robot_position(rgb_image_base, new_frame, self.first_camera_index,
-    #                                                         self.active_camera_index, start_location, robot_data)
-    #         robot_current_unit_direction = wpd.get_unit_direction_by_points(robot_prev_position, robot_current_position)
-    #         eps = self.get_eps(single_WP, robot_current_position)
-    #         if self.writePNGs:
-    #             self.show_and_save_image(rgb_image_base, new_frame, new_frame_with_frame_index, single_WP,
-    #                                 robot_current_position, prev_best_robo_pos, waypoints, Az, robot_data,
-    #                                 active_camera_name, eps)
-    #     self.start_waypoint_indexes[self.active_camera_index] = waypoint_index
-    #     return robot_current_position
-
     def rotate_vector(self, unit_vector, angle_degrees):
         angle_radians = np.radians(angle_degrees)
         rotation_matrix = np.array([
@@ -585,32 +464,6 @@ class DarkRoom:
                         color=(255, 255, 0), thickness=2, lineType=cv2.LINE_AA)
             cv2.line(rgb_image_with_polygon, current_point, next_point, color=(0, 255, 0), thickness=4)
         return rgb_image_with_polygon
-
-
-
-
-
-        # second_point = (self.robot_current_position + 200 * self.robot_current_unit_direction).astype(int)
-        # cv2.arrowedLine(rgb_image, self.robot_current_position, second_point, (255, 0, 255), 5)
-        # rgb_image = wpd.draw_circle_on_image(rgb_image, center=point1, color=(0, 0, 255), radius=10, thickness=-1)
-        # cv2.putText(rgb_image, "p1=({:3.0f}, {:3.0f})".format(point1[0], point1[1]),
-        #             (point1[0] + 30, point1[1]), fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=1.3,
-        #             color=(255, 255, 0), thickness=2, lineType=cv2.LINE_AA)
-        # rgb_image = wpd.draw_circle_on_image(rgb_image, center=point2, color=(0, 0, 255), radius=10, thickness=-1)
-        # cv2.putText(rgb_image, "p2=({:3.0f}, {:3.0f})".format(point2[0], point2[1]),
-        #             (point2[0] + 30, point2[1]), fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=1.3,
-        #             color=(255, 255, 0), thickness=2, lineType=cv2.LINE_AA)
-        # rgb_image = wpd.draw_circle_on_image(rgb_image, center=robot_position, color=(0, 255, 0), radius=10, thickness=-1)
-        # cv2.putText(rgb_image, "robot_position=({:3.0f}, {:3.0f})".format(robot_position[0], robot_position[1]),
-        #             (robot_position[0] + 30, robot_position[1]), fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=1.3,
-        #             color=(255, 255, 0), thickness=2, lineType=cv2.LINE_AA)
-        #
-        # rgb_image = cv2.line(rgb_image, point1, point2, color=(0, 255, 0), thickness=4)
-        # rgb_image = cv2.line(rgb_image, point1, robot_position, color=(0, 255, 0), thickness=4)
-        # rgb_image = cv2.line(rgb_image, point2, robot_position, color=(0, 255, 0), thickness=4)
-        # cv2.imshow('rgb_image', rgb_image)
-        # cv2.waitKey(0)
-
 
 
 
@@ -742,25 +595,6 @@ class DarkRoom:
         self.move_robot(azimuth=azimuth, dist_in_pixels=eps)
         return
 
-
-    # def get_robot_data_for_all_cameras(self, all_cameras_frames):
-    #     is_robot_found_by_aruco, robot_positions_in_all_cameras_by_aruco, robot_unit_directions_in_all_cameras_by_aruco = self.get_robot_data_for_all_cameras_by_aruco(all_cameras_frames)
-    #     if is_robot_found_by_aruco == False:
-    #         robot_current_position, self.active_camera_index = wpd.get_robot_position_from_all_cameras_by_frames_diff(
-    #             self.base_cameras_frames, all_cameras_frames, first_camera_index, start_location, cameras_where_robot_finished)
-    #         # robot_current_unit_direction =  wpd.get_unit_direction_by_points(prev_robot_position, robot_current_position)
-    #         if self.waypoints_calculated[self.active_camera_index] == False:
-    #             self.get_waypoints_for_specific_camera(self.active_camera_index, all_cameras_frames,
-    #                                                    robot_current_position, robot_current_unit_direction)
-    #     else:
-    #         self.active_camera_index = self.get_active_camera_index(robot_positions_in_all_cameras_by_aruco,
-    #                                                                 self.waypoints_for_all_cameras,
-    #                                                                 self.start_waypoint_indexes,
-    #                                                                 self.active_camera_index,
-    #                                                                 self.cameras_where_robot_finished)
-    #         robot_current_position = robot_positions_in_all_cameras[self.active_camera_index]
-    #         robot_current_unit_direction = robot_unit_directions_in_all_cameras[self.active_camera_index]
-
     def get_robot_data_for_all_cameras_by_aruco(self, all_cameras_frames):
         num_of_cameras = len(all_cameras_frames)
         robot_positions_in_all_cameras_by_aruco = [None] * num_of_cameras
@@ -790,9 +624,6 @@ class DarkRoom:
         else:
             waypoints_for_current_camera = wpd.get_waypoints(rgb_image, robot_position, robot_unit_direction,
                                                              wpd.ImageDateType.IMAGE_WITH_ROBOT)
-
-        if len(waypoints_for_current_camera) == 0:
-            david = 5
         if len(waypoints_for_current_camera) > 0:
             self.waypoints_calculated[camera_index] = True
         flipped_waypoints_for_current_camera = []
@@ -812,30 +643,6 @@ class DarkRoom:
                 continue
             robot_position = robot_positions_in_all_cameras[camera_index]
             robot_unit_direction = robot_unit_directions_in_all_cameras[camera_index]
-            # #TODO - delete
-            # if camera_index == 0:
-            #
-            #     robot_position = np.array((1841, 716))
-            #     robot_unit_direction = np.array((-1, 0))
-            #
-            #     robot_position = np.array((328, 50))
-            #     robot_unit_direction = np.array((0, 1))
-            # if camera_index == 1:
-            #     robot_position = np.array((1852, 627))
-            #     robot_unit_direction = np.array((-1, 0))
-            #
-            #     robot_position = np.array((1600, 1054))
-            #     robot_unit_direction = np.array((0, -1))
-            #
-            #     robot_position = np.array((1734, 42))
-            #     robot_unit_direction = np.array((0, 1))
-            # if camera_index == 3:
-            #     robot_position = np.array((41, 854))
-            #     robot_unit_direction = np.array((1, 0))
-            #
-            #     robot_position = np.array((596, 1014))
-            #     robot_unit_direction = np.array((1, 0))
-
 
             if self.robot_first_position is not None and robot_position is not None:
                 dist_from_first_position = np.linalg.norm(robot_position - self.robot_first_position)
@@ -886,30 +693,6 @@ class DarkRoom:
         # if current_active_camera != new_active_camera and current_active_camera >= 0:
         #     cameras_where_robot_finished[current_active_camera] = True
         return new_active_camera
-
-    # def bring_back_lost_robot(self):
-    #     #if both the arucos are not detected
-    #     max_dist_in_pixels_to_frame_borders = 50
-    #     x_prev_position = self.robot_prev_position[0]
-    #     y_prev_position = self.robot_prev_position[1]
-    #     x_prev_direction = self.robot_prev_unit_direction[0]
-    #     y_prev_direction = self.robot_prev_unit_direction[1]
-    #     x_fix_meters = 0
-    #     y_fix_meters = 0
-    #     if y_prev_position < max_dist_in_pixels_to_frame_borders and y_prev_direction < 0:
-    #         # meaning, the current y_position is probably negative
-    #         y_fix_meters = 0.2
-    #     if y_prev_position > (self.image_height - max_dist_in_pixels_to_frame_borders) and y_prev_direction > 0:
-    #         # meaning, the current y_position is probably bigger than self.image_height
-    #         y_fix_meters = -0.2
-    #     if x_prev_position < max_dist_in_pixels_to_frame_borders and x_prev_direction < 0:
-    #         # meaning, the current x_position is probably negative
-    #         x_fix_meters = 0.2
-    #     if x_prev_position > (self.image_width - max_dist_in_pixels_to_frame_borders) and x_prev_direction > 0:
-    #         # meaning, the current x_position is probably bigger than self.image_width
-    #         x_fix_meters = -0.2
-    #     if x_fix_meters != 0 or y_fix_meters != 0:
-    #         self.ninja1.chassis.move(x=x_fix_meters, y=y_fix_meters, z=0, z_speed=100).wait_for_completed()
 
 
     def get_unit_direction_from_angle(self, angle_degrees):
@@ -999,31 +782,6 @@ class DarkRoom:
                 if current_waypoint_index is None:
                     self.calc_waypoints_again_per_camera[camera_index] = True
         return
-
-
-        # num_of_frames_so_far = len(self.active_cameras_each_frame)
-        # max_num_of_frames_new_camera = 300
-        # if num_of_frames_so_far <= max_num_of_frames_new_camera:
-        #     return
-        # min_num_of_frames_for_prev_camera = 10
-        #
-        # num_of_cameras_with_robot = len(camera_indexes_with_robot)
-        # if num_of_cameras_with_robot > 1 and num_of_frames_so_far > 0:
-        #     count = 0
-        #     for j in range(min_num_of_frames_for_prev_camera):
-        #         if self.active_cameras_each_frame[-(j + 1)] == self.prev_active_camera_index:
-        #             count += 1
-        #     if count == min_num_of_frames_for_prev_camera:
-        #         for camera_index in camera_indexes_with_robot:
-        #             if camera_index != self.prev_active_camera_index:
-        #                 count = 0
-        #                 for j in range(max_num_of_frames_new_camera):
-        #                     if self.active_cameras_each_frame[-(j + 1)] != camera_index:
-        #                         count += 1
-        #                 if count == max_num_of_frames_new_camera:
-        #                     self.calc_waypoints_again_per_camera[camera_index] = True
-        #                     # self.active_camera_index = camera_index
-        #                 break
 
     def check_if_position_is_inside_frame(self, robot_current_position):
         x_position = robot_current_position[0]
@@ -1226,37 +984,11 @@ class DarkRoom:
                     base_frame_first_camera = self.base_cameras_frames[self.first_camera_index]
                     self.robot_first_position = self.robot_current_position
                     self.robot_first_unit_direction = self.robot_current_unit_direction
-
-
             else:
-                #self.bring_back_lost_robot()
-
-                # if self.robot_current_position is not None:
-                #     is_in_middle_of_frame = self.check_if_in_middle_of_frame(self.robot_prev_position, x_dist_from_boundaries=150, y_dist_from_boundaries=150)
-                #     if is_in_middle_of_frame:
-                #         # we are probably under a bridge
-                #         self.is_bridge = True
-                #         self.continue_straight_text = "continue straight"
-                #         self.plot_image()
-                #         self.move_robot(azimuth=0, dist_in_pixels=self.straight_distance_to_move_in_pixels)  # just continue straint
-                #         self.increase_frame_index()
-                #         continue
-                #     else:
-                #         self.is_bridge = False
-
                 self.prev_active_camera_index = self.active_camera_index
                 self.robot_prev_position = self.robot_current_position
                 self.robot_prev_unit_direction = self.robot_current_unit_direction
                 if self.work_with_real_robot:
-                    # self.robot_current_position, _, self.robot_contour, self.active_camera_index = wpd.get_robot_position_from_all_cameras_by_frames_diff(
-                    #     self.base_cameras_frames, self.all_cameras_frames, self.first_camera_index,
-                    #     self.robot_first_position, self.cameras_where_robot_finished)
-                    # if self.active_camera_index != self.prev_active_camera_index:
-                    #     self.continue_straight_text = "continue straight"
-                    #     self.plot_image()
-                    #     self.move_robot(azimuth=0, dist_in_pixels=self.straight_distance_to_move_in_pixels)  # just continue straint
-                    #     self.increase_frame_index()
-                    #     continue
                     self.robot_current_unit_direction = self.calc_unit_direction_when_aruco_is_not_detected(
                         prev_unit_direction=self.robot_prev_unit_direction, yaw_degrees_prev_frame=self.prev_yaw,
                         yaw_degrees_current_frame=self.robot_yaw)
@@ -1299,14 +1031,6 @@ class DarkRoom:
                     self.move_robot(azimuth=0, dist_in_pixels=self.straight_distance_to_move_in_pixels) #just continue straint
                     self.increase_frame_index()
                     continue
-                # if self.prev_active_camera_index != self.active_camera_index or not self.aruco_detected_per_camera[self.active_camera_index]:
-                #     self.calc_waypoints_again_per_camera[self.active_camera_index] = True
-                #     #we switched to a different camera and also the aruco is not detected so we can't know the robot direction
-                #     self.continue_straight_text = "continue straight"
-                #     self.plot_image()
-                #     self.move_robot(azimuth=0, dist_in_pixels=self.straight_distance_to_move_in_pixels) #just continue straint
-                #     self.increase_frame_index()
-                #     continue
                 if self.waypoints_calculated[self.active_camera_index] == False or self.calc_waypoints_again_per_camera[self.active_camera_index]:
                     waypoints_for_specific_camera = self.get_waypoints_for_specific_camera(self.active_camera_index, self.all_cameras_frames, self.robot_current_position, self.robot_current_unit_direction)
                     self.waypoints_for_all_cameras[self.active_camera_index] = waypoints_for_specific_camera
