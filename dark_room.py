@@ -2,7 +2,7 @@ import math
 import time
 import cv2
 import numpy as np
-import waypoints_detection1 as wpd
+import waypoints_detection as wpd
 from datetime import datetime
 import os
 from robomaster import robot
