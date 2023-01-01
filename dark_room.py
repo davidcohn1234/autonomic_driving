@@ -56,9 +56,10 @@ class DarkRoom:
         self.max_eps = 80
         self.cameras_names = ['UOXBGL', 'TGASLM', 'VSYAJL', 'IGXJVS']
         self.cameras_IPs = ['192.168.0.233', '192.168.0.76', '192.168.0.79', '192.168.0.55']
-        self.videos_and_images_folder = './videos_and_images'
-        self.download_input_videos_from_google_drive(self.videos_and_images_folder)
-        common_utils.extract_frames_from_videos(self.videos_and_images_folder)
+        if not self.work_with_real_robot:
+            self.videos_and_images_folder = './videos_and_images'
+            self.download_input_videos_from_google_drive(self.videos_and_images_folder)
+            common_utils.extract_frames_from_videos(self.videos_and_images_folder)
         self.writePNGs = True
         self.counter = 0
         self.images_output_folder_with_data = self.create_output_folders()
