@@ -382,15 +382,6 @@ def get_all_contours_boxes(contours):
 
 
 def draw_boxes_and_write_their_sizes_on_image(rgb_image, boxes, box_color, box_thickness):
-    # x, y, w, h = cv2.boundingRect(single_contour)
-    # if self.max_screen_width > w > self.min_screen_width and \
-    #         self.max_screen_height > h > self.min_screen_height:
-    #     x1 = x
-    #     x2 = x1 + w
-    #     y1 = y
-    #     y2 = y1 + h
-    #     boxes.append((x1, y1, x2, y2))
-
     for box in boxes:
         x1 = int(box[0])
         y1 = int(box[1])
@@ -413,8 +404,8 @@ def draw_boxes_and_write_their_sizes_on_image(rgb_image, boxes, box_color, box_t
         # local_max_square_size = 185
         # local_min_square_size = 100
 
-        # if self.max_screen_width > width > self.min_screen_width and \
-        #         self.max_screen_height > height > self.min_screen_height:
+        # if local_max_screen_width > width > local_min_screen_width and \
+        #         local_max_screen_height > height > local_min_screen_height:
         # if local_max_square_size > width > local_min_square_size and \
         #         local_max_square_size > height > local_min_square_size:
         cv2.rectangle(rgb_image, (x1, y1), (x2, y2), box_color, box_thickness)
@@ -748,18 +739,18 @@ def minimize_waypoints_in_one_line(waypoints, max_angle_delta=5):
 
 
 
-def get_polygon_in_robot_direction(self, angle_degrees=20, vector_size1=450, vector_size2=250, vector_size3=50):
-    unit_vec1 = self.rotate_vector(unit_vector=self.robot_current_unit_direction, angle_degrees=angle_degrees)
-    unit_vec2 = self.rotate_vector(unit_vector=self.robot_current_unit_direction, angle_degrees=-angle_degrees)
-    position_behind_robot = (self.robot_current_position - vector_size3 * unit_vec1).astype(int)
-    unit_perpendicular_direction1 = np.array((-self.robot_current_unit_direction[1], self.robot_current_unit_direction[0]))
-    #unit_perpendicular_direction2 = np.array((self.robot_current_unit_direction[1], -self.robot_current_unit_direction[0]))
-    point1 = (self.robot_current_position + vector_size1 * unit_vec1).astype(int)
-    point2 = (self.robot_current_position + vector_size1 * unit_vec2).astype(int)
-    point3 = (position_behind_robot - vector_size2 * unit_perpendicular_direction1).astype(int)
-    point4 = (position_behind_robot + vector_size2 * unit_perpendicular_direction1).astype(int)
-    polygon_points = [(point1[0], point1[1]), (point2[0], point2[1]), (point3[0], point3[1]), (point4[0], point4[1])]
-    return polygon_points
+# def get_polygon_in_robot_direction(angle_degrees=20, vector_size1=450, vector_size2=250, vector_size3=50):
+#     unit_vec1 = rotate_vector(unit_vector=robot_current_unit_direction, angle_degrees=angle_degrees)
+#     unit_vec2 = rotate_vector(unit_vector=robot_current_unit_direction, angle_degrees=-angle_degrees)
+#     position_behind_robot = (robot_current_position - vector_size3 * unit_vec1).astype(int)
+#     unit_perpendicular_direction1 = np.array((-robot_current_unit_direction[1], robot_current_unit_direction[0]))
+#     #unit_perpendicular_direction2 = np.array((robot_current_unit_direction[1], -robot_current_unit_direction[0]))
+#     point1 = (robot_current_position + vector_size1 * unit_vec1).astype(int)
+#     point2 = (robot_current_position + vector_size1 * unit_vec2).astype(int)
+#     point3 = (position_behind_robot - vector_size2 * unit_perpendicular_direction1).astype(int)
+#     point4 = (position_behind_robot + vector_size2 * unit_perpendicular_direction1).astype(int)
+#     polygon_points = [(point1[0], point1[1]), (point2[0], point2[1]), (point3[0], point3[1]), (point4[0], point4[1])]
+#     return polygon_points
 
 def add_lines_to_make_sure_the_robot_drives_in_the_right_direction(binary_image, robot_position, unit_direction, vector_size1, vector_size2, vector_size3):
     position_behind_robot = (robot_position - vector_size3 * unit_direction).astype(int)
