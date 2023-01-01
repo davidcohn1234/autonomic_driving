@@ -19,7 +19,7 @@ robot_possible_ids = {front_aruco_key: front_aruco_id, back_aruco_key: back_aruc
 aruco_parameters = cv2.aruco.DetectorParameters_create()
 front_back_movement_vec_priorities = np.array([[back_aruco_id, front_aruco_id]])
 counter_for_debugging = 0
-debug_mode = False
+debug_mode = True
 
 
 class ImageDateType(Enum):
@@ -117,8 +117,6 @@ def shortest_path_from_start_to_end(start_point, end_point, binary_image):
 
 
 def shortest_path(start_point, binary_image):
-    binary_image_with_data_3_channels_for_debugging = expand_1_channel_image_to_3_channels_image(binary_image)
-    binary_image_with_data_3_channels_with_start_point_for_debugging = draw_circle_on_image(rgb_image=binary_image_with_data_3_channels_for_debugging, center=(start_point[1], start_point[0]), color=(255, 0, 0), radius=10, thickness=-1)
     very_big_number = 1000000
     costs = np.where(binary_image == 0, 1, very_big_number)
     m = mcp.MCP(costs, fully_connected=True)
@@ -132,7 +130,7 @@ def shortest_path(start_point, binary_image):
         end=end_point,
         fully_connected=True,
         geometric=False)
-    return path, cost, binary_image_with_data_3_channels_with_start_point_for_debugging
+    return path, cost
 
 
 def resize_image(rgb_image, scale_percent):
@@ -277,19 +275,19 @@ def get_pependicular_vector(unit_vector):
     return unit_perpendicular_vector
 
 
-def plot_mcp_points(rgb_image, current_waypoint, next_waypoint):
-    binary_image, images_for_debugging = get_binary_image(rgb_image)
-    binary_image_3_channels = expand_1_channel_image_to_3_channels_image(binary_image)
-    start_point = [current_waypoint[1], current_waypoint[0]]
-    end_point = [next_waypoint[1], next_waypoint[0]]
-    path, cost = shortest_path_from_start_to_end(start_point, end_point, binary_image)
-    simplified_path = simplify_coords_vw(path, 800.0)
-    rgb_image_with_path = plot_path_on_image(rgb_image, binary_image_3_channels, simplified_path)
-    binary_image_3_channels_with_path = plot_path_on_image(binary_image_3_channels, simplified_path)
-    resized_binary_image_3_channels_with_path = resize_image(rgb_image=binary_image_3_channels_with_path,
-                                                             scale_percent=80)
-    cv2.imshow('resized_binary_image_3_channels_with_path', resized_binary_image_3_channels_with_path)
-    cv2.waitKey(0)
+# def plot_mcp_points(rgb_image, current_waypoint, next_waypoint):
+#     binary_image, images_for_debugging = get_binary_image(rgb_image)
+#     binary_image_3_channels = expand_1_channel_image_to_3_channels_image(binary_image)
+#     start_point = [current_waypoint[1], current_waypoint[0]]
+#     end_point = [next_waypoint[1], next_waypoint[0]]
+#     path, cost = shortest_path_from_start_to_end(start_point, end_point, binary_image)
+#     simplified_path = simplify_coords_vw(path, 800.0)
+#     rgb_image_with_path = plot_path_on_image(rgb_image, binary_image_3_channels, simplified_path)
+#     binary_image_3_channels_with_path = plot_path_on_image(binary_image_3_channels, simplified_path)
+#     resized_binary_image_3_channels_with_path = resize_image(rgb_image=binary_image_3_channels_with_path,
+#                                                              scale_percent=80)
+#     cv2.imshow('resized_binary_image_3_channels_with_path', resized_binary_image_3_channels_with_path)
+#     cv2.waitKey(0)
 
 
 def get_next_waypoint(rgb_image, current_waypoint, unit_vector):
@@ -811,8 +809,8 @@ def get_path(robot_position, point, unit_direction, rgb_image, max_dist_between_
     binary_skeleton_contour_black_background = convert_true_false_image_to_uint8(skeleton_contour)
     # binary_skeleton_contour_black_background_black_boundaries = put_black_pixels_in_image_bounderies(binary_skeleton_contour_black_background, boundary_width=80)
     binary_skeleton_contour_white_background = cv2.bitwise_not(binary_skeleton_contour_black_background)
-    nearest_point = find_nearest_white(binary_skeleton_contour_black_background, point)
-    path, cost, binary_image_with_data_3_channels_with_start_point_for_debugging = shortest_path(nearest_point, binary_skeleton_contour_white_background)
+    start_point = find_nearest_white(binary_skeleton_contour_black_background, point)
+    path, cost = shortest_path(start_point, binary_skeleton_contour_white_background)
 
     # simplified_path = simplify_coords_vw(path, 200.0)
     simplified_path = reduce_path_lenth(path=path, max_dist_between_consecutive_points=max_dist_between_consecutive_points)
@@ -828,9 +826,13 @@ def get_path(robot_position, point, unit_direction, rgb_image, max_dist_between_
     dilate_kernel = np.ones((dilate_kernel_size, dilate_kernel_size), np.uint8)
     dilate_binary_skeleton_contour_black_background = cv2.dilate(binary_skeleton_contour_black_background, dilate_kernel)
     dilate_binary_skeleton_contour_white_background = cv2.bitwise_not(dilate_binary_skeleton_contour_black_background)
+    dilate_binary_skeleton_contour_white_background_with_filled_contour = dilate_binary_skeleton_contour_white_background.copy()
+    dilate_binary_skeleton_contour_white_background_with_filled_contour[binary_image_with_filled_single_contour == 0] = 0
     dilate_binary_skeleton_contour_white_background_3_channels = expand_1_channel_image_to_3_channels_image(dilate_binary_skeleton_contour_white_background)
     dilate_binary_skeleton_contour_white_background_3_channels_with_simplified_path = plot_path_on_image(rgb_image=dilate_binary_skeleton_contour_white_background_3_channels,
                                                         path=flipped_simplified_path_without_going_back)
+
+    dilate_binary_image_with_data_3_channels_with_start_point_for_debugging = draw_circle_on_image(rgb_image=dilate_binary_skeleton_contour_white_background_3_channels, center=(start_point[1], start_point[0]), color=(255, 0, 0), radius=10, thickness=-1)
     rgb_image_with_simplified_path = plot_path_on_image(rgb_image=rgb_image,
                                                         path=flipped_simplified_path_without_going_back)
     if debug_mode:
@@ -842,8 +844,9 @@ def get_path(robot_position, point, unit_direction, rgb_image, max_dist_between_
             (binary_skeleton_contour_white_background, '11_binary_skeleton_contour_white_background'),
             (dilate_binary_skeleton_contour_black_background, '12_dilate_binary_skeleton_contour_black_background'),
             (dilate_binary_skeleton_contour_white_background, '13_dilate_binary_skeleton_contour_white_background'),
-            (binary_image_with_data_3_channels_with_start_point_for_debugging, '14_binary_image_with_data_3_channels_with_start_point_for_debugging'),
-            (dilate_binary_skeleton_contour_white_background_3_channels_with_simplified_path, '15_dilate_binary_skeleton_contour_white_background_3_channels_with_simplified_path'),
+            (dilate_binary_skeleton_contour_white_background_with_filled_contour, '14_dilate_binary_skeleton_contour_white_background_with_filled_contour'),
+            (dilate_binary_image_with_data_3_channels_with_start_point_for_debugging, '15_dilate_binary_image_with_data_3_channels_with_start_point_for_debugging'),
+            (dilate_binary_skeleton_contour_white_background_3_channels_with_simplified_path, '16_dilate_binary_skeleton_contour_white_background_3_channels_with_simplified_path'),
             (rgb_image_with_simplified_path, '16_rgb_image_with_simplified_path')
         ]
         images_for_debugging = images_for_debugging_part_1 + images_for_debugging_part_2
