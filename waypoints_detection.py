@@ -19,7 +19,7 @@ robot_possible_ids = {front_aruco_key: front_aruco_id, back_aruco_key: back_aruc
 aruco_parameters = cv2.aruco.DetectorParameters_create()
 front_back_movement_vec_priorities = np.array([[back_aruco_id, front_aruco_id]])
 counter_for_debugging = 0
-debug_mode = True
+debug_mode = False
 
 
 class ImageDateType(Enum):
