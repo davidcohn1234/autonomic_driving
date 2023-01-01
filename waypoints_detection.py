@@ -7,6 +7,7 @@ from enum import Enum
 from skimage.graph import mcp
 from skimage.metrics import structural_similarity as compare_ssim
 import math
+import os
 
 dict_type = cv2.aruco.DICT_4X4_250
 aruco_dict = cv2.aruco.Dictionary_get(dict_type)
@@ -17,6 +18,8 @@ back_aruco_key = 'back_aruco'
 robot_possible_ids = {front_aruco_key: front_aruco_id, back_aruco_key: back_aruco_id}
 aruco_parameters = cv2.aruco.DetectorParameters_create()
 front_back_movement_vec_priorities = np.array([[back_aruco_id, front_aruco_id]])
+counter_for_debugging = 0
+debug_mode = False
 
 
 class ImageDateType(Enum):
@@ -114,13 +117,13 @@ def shortest_path_from_start_to_end(start_point, end_point, binary_image):
 
 
 def shortest_path(start_point, binary_image):
-    binary_image_with_data_3_channels = expand_1_channel_image_to_3_channels_image(binary_image)
-    binary_image_with_data_3_channels = draw_circle_on_image(rgb_image=binary_image_with_data_3_channels, center=(start_point[1], start_point[0]), color=(0, 255, 0), radius=10, thickness=-1)
-    very_bin_number = 1000000
-    costs = np.where(binary_image == 0, 1, very_bin_number)
+    binary_image_with_data_3_channels_for_debugging = expand_1_channel_image_to_3_channels_image(binary_image)
+    binary_image_with_data_3_channels_with_start_point_for_debugging = draw_circle_on_image(rgb_image=binary_image_with_data_3_channels_for_debugging, center=(start_point[1], start_point[0]), color=(255, 0, 0), radius=10, thickness=-1)
+    very_big_number = 1000000
+    costs = np.where(binary_image == 0, 1, very_big_number)
     m = mcp.MCP(costs, fully_connected=True)
     cost_mcp, path_mcp = m.find_costs([start_point])
-    cost_mcp[cost_mcp >= very_bin_number] = -10
+    cost_mcp[cost_mcp >= very_big_number] = -10
     end_point = np.unravel_index(np.argmax(cost_mcp, axis=None), cost_mcp.shape)
     m.traceback(end_point)
     path, cost = skimage.graph.route_through_array(
@@ -129,7 +132,7 @@ def shortest_path(start_point, binary_image):
         end=end_point,
         fully_connected=True,
         geometric=False)
-    return path, cost
+    return path, cost, binary_image_with_data_3_channels_with_start_point_for_debugging
 
 
 def resize_image(rgb_image, scale_percent):
@@ -275,7 +278,7 @@ def get_pependicular_vector(unit_vector):
 
 
 def plot_mcp_points(rgb_image, current_waypoint, next_waypoint):
-    binary_image = get_binary_image(rgb_image)
+    binary_image, images_for_debugging = get_binary_image(rgb_image)
     binary_image_3_channels = expand_1_channel_image_to_3_channels_image(binary_image)
     start_point = [current_waypoint[1], current_waypoint[0]]
     end_point = [next_waypoint[1], next_waypoint[0]]
@@ -457,7 +460,16 @@ def get_binary_image(rgb_image):
 
     # cv2.imshow('binary_image_with_complete_lines', binary_image_with_complete_lines)
     # cv2.waitKey(0)
-    return binary_image_white_background
+    images_for_debugging = [
+        (rgb_image, '01_rgb_image'),
+        (binary_image_edge_detection_black_background, '02_binary_image_edge_detection_black_background'),
+        #(binary_image_adaptive_thresh_black_background, '02_binary_image_adaptive_thresh_black_background'),
+        (dilate_binary_image, '03_dilate_binary_image'),
+        (binary_image_with_complete_lines_3_channels, '04_binary_image_with_complete_lines_3_channels'),
+        (binary_image_with_complete_lines, '05_binary_image_with_complete_lines'),
+        (binary_image_white_background, '06_binary_image_white_background')
+    ]
+    return binary_image_white_background, images_for_debugging
 
 
 # def get_front_and_back_locations(robot_locations):
@@ -762,14 +774,26 @@ def add_lines_to_make_sure_the_robot_drives_in_the_right_direction(binary_image,
     cv2.line(binary_image_with_robot_boundaries, point2_behind_robot, point4, color=0, thickness=8)
     return binary_image_with_robot_boundaries
 
-
+def save_images_to_folders(frame_index, images, main_output_folder):
+    num_of_images = len(images)
+    debugging_images_folder_name = 'debugging_images'
+    for image_index in range(num_of_images):
+        current_image = images[image_index][0]
+        current_folder_name = images[image_index][1]
+        images_output_folder = main_output_folder + '/' + debugging_images_folder_name + '/' + current_folder_name
+        isExist = os.path.exists(images_output_folder)
+        if not isExist:
+            os.makedirs(images_output_folder)
+        file_full_path = "{}/{:05d}.jpg".format(images_output_folder, frame_index)
+        cv2.imwrite(file_full_path, current_image)
 
 def get_path(robot_position, point, unit_direction, rgb_image, max_dist_between_consecutive_points=140):
+    global counter_for_debugging
     scale_factor_perpendicular = 30
     scale_factor_negative_driving_direction = 100
     scale_factor_driving_direction = 50
 
-    binary_image = get_binary_image(rgb_image)
+    binary_image, images_for_debugging_part_1 = get_binary_image(rgb_image)
     if robot_position is not None:
         binary_image_with_lines_around_robot = add_lines_to_make_sure_the_robot_drives_in_the_right_direction(binary_image, robot_position, unit_direction,
                                                                        vector_size1=300, vector_size2=150, vector_size3=50)
@@ -797,7 +821,7 @@ def get_path(robot_position, point, unit_direction, rgb_image, max_dist_between_
     # binary_skeleton_contour_black_background_black_boundaries = put_black_pixels_in_image_bounderies(binary_skeleton_contour_black_background, boundary_width=80)
     binary_skeleton_contour_white_background = cv2.bitwise_not(binary_skeleton_contour_black_background)
     nearest_point = find_nearest_white(binary_skeleton_contour_black_background, point)
-    path, cost = shortest_path(nearest_point, binary_skeleton_contour_white_background)
+    path, cost, binary_image_with_data_3_channels_with_start_point_for_debugging = shortest_path(nearest_point, binary_skeleton_contour_white_background)
 
     # simplified_path = simplify_coords_vw(path, 200.0)
     simplified_path = reduce_path_lenth(path=path, max_dist_between_consecutive_points=max_dist_between_consecutive_points)
@@ -809,7 +833,32 @@ def get_path(robot_position, point, unit_direction, rgb_image, max_dist_between_
     flipped_simplified_path_without_going_back = []
     for single_waypoint in simplified_path_without_going_back:
         flipped_simplified_path_without_going_back.append(np.array([single_waypoint[1], single_waypoint[0]]))
-    rgb_image_with_simplified_path = plot_path_on_image(rgb_image=rgb_image, path=flipped_simplified_path_without_going_back)
+    dilate_kernel_size = 5
+    dilate_kernel = np.ones((dilate_kernel_size, dilate_kernel_size), np.uint8)
+    dilate_binary_skeleton_contour_black_background = cv2.dilate(binary_skeleton_contour_black_background, dilate_kernel)
+    dilate_binary_skeleton_contour_white_background = cv2.bitwise_not(dilate_binary_skeleton_contour_black_background)
+    dilate_binary_skeleton_contour_white_background_3_channels = expand_1_channel_image_to_3_channels_image(dilate_binary_skeleton_contour_white_background)
+    dilate_binary_skeleton_contour_white_background_3_channels_with_simplified_path = plot_path_on_image(rgb_image=dilate_binary_skeleton_contour_white_background_3_channels,
+                                                        path=flipped_simplified_path_without_going_back)
+    rgb_image_with_simplified_path = plot_path_on_image(rgb_image=rgb_image,
+                                                        path=flipped_simplified_path_without_going_back)
+    if debug_mode:
+        images_for_debugging_part_2 = [
+            (binary_image_with_lines_around_robot, '07_binary_image_with_lines_around_robot'),
+            (binary_image_with_filled_single_contour, '08_binary_image_with_filled_single_contour'),
+            (binary_image_with_filled_single_contour_with_black_lines_around_unit_direction, '09_binary_image_with_filled_single_contour_with_black_lines_around_unit_direction'),
+            (binary_skeleton_contour_black_background, '10_binary_skeleton_contour_black_background'),
+            (binary_skeleton_contour_white_background, '11_binary_skeleton_contour_white_background'),
+            (dilate_binary_skeleton_contour_black_background, '12_dilate_binary_skeleton_contour_black_background'),
+            (dilate_binary_skeleton_contour_white_background, '13_dilate_binary_skeleton_contour_white_background'),
+            (binary_image_with_data_3_channels_with_start_point_for_debugging, '14_binary_image_with_data_3_channels_with_start_point_for_debugging'),
+            (dilate_binary_skeleton_contour_white_background_3_channels_with_simplified_path, '15_dilate_binary_skeleton_contour_white_background_3_channels_with_simplified_path'),
+            (rgb_image_with_simplified_path, '16_rgb_image_with_simplified_path')
+        ]
+        images_for_debugging = images_for_debugging_part_1 + images_for_debugging_part_2
+        counter_for_debugging += 1
+        main_output_folder = './autonomic_driving_output'
+        save_images_to_folders(counter_for_debugging, images_for_debugging, main_output_folder)
     return simplified_path_without_going_back, binary_skeleton_contour_black_background
 
 
