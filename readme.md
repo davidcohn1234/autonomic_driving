@@ -4,14 +4,8 @@ This project is an implementation of autonomic driving for robomaster ep.
 It was tested in a dark room with 4 IR cameras.  
 I used `python 3.8.10` 
 
-
-The 8 shapes are:  
-circle, octagon, pentagon, rectangle, square, rhombus, star, triangle.  
- 
 ### Example output for robot:  
 <img src="./resources_for_readme/gif_videos/robot_autonomic_driving.gif" width="480" height="360" />
-
-
 
 ## prerequisites
 1. `Python 3.8` installed (python 3.10 will not with the robomaster sdk).
