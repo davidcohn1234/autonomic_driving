@@ -13,6 +13,7 @@ from shapely.geometry.polygon import Polygon
 from threading import Thread
 import gdown
 import common_utils
+from moviepy.editor import VideoFileClip
 
 
 class MyVideoCapture:
@@ -52,6 +53,7 @@ class DarkRoom:
         self.sim_with_room_frame = True
         self.work_with_real_robot = False
         self.use_time_sleep = not self.sim_with_room_frame
+        self.main_output_folder = './autonomic_driving_output'
         self.path4simframes = './videos_and_images/images/'
         self.max_eps = 80
         self.cameras_names = ['UOXBGL', 'TGASLM', 'VSYAJL', 'IGXJVS']
@@ -62,7 +64,7 @@ class DarkRoom:
             common_utils.extract_frames_from_videos(self.videos_and_images_folder)
         self.writePNGs = True
         self.counter = 0
-        self.images_output_folder_with_data = self.create_output_folders()
+        self.images_output_folder_with_data, self.videos_output_folder_with_data = self.create_images_and_videos_output_folders()
         self.vcaps_list = self.initialize_vcaps()
         self.ninja1 = self.initialize_robot()
         self.num_of_cameras = len(self.vcaps_list)
@@ -114,6 +116,7 @@ class DarkRoom:
         self.first_time_reading_pitch = True
         self.waiting_for_completed = False
         self.first_time_moving = True
+        self.create_gif_video = False
         #self.init_pitch_control()
 
     def download_input_videos_from_google_drive(self, videos_and_images_folder):
@@ -239,17 +242,14 @@ class DarkRoom:
 
 
 
-    def create_output_folders(self):
+    def create_images_and_videos_output_folders(self):
         now = datetime.now()
         now = now.strftime("date_%m_%d_%Y__time_%H_%M_%S")
-        output_folder = './autonomic_driving_output'
-        #images_output_folder_original = output_folder + '/' + now + '/original'
-        images_output_folder_with_data = output_folder + '/' + now
-        #images_output_folder_base = output_folder + '/' + now + '/base'
-        #self.create_folder_if_not_exist(images_output_folder_original)
+        images_output_folder_with_data = self.main_output_folder + '/' + now + '/images'
+        videos_output_folder_with_data = self.main_output_folder + '/' + now + '/videos'
         self.create_folder_if_not_exist(images_output_folder_with_data)
-        #self.create_folder_if_not_exist(images_output_folder_base)
-        return images_output_folder_with_data
+        self.create_folder_if_not_exist(videos_output_folder_with_data)
+        return images_output_folder_with_data, videos_output_folder_with_data
 
 
     def create_folder_if_not_exist(self, folder_full_path):
@@ -958,6 +958,21 @@ class DarkRoom:
         cv2.imshow('resized_rgb_image', resized_rgb_image)
         cv2.waitKey(1)
 
+    def create_videos(self):
+        frame_rate = 20
+        video_name = 'robot_autonomic_driving'
+        video_path = self.videos_output_folder_with_data + '/' + video_name + '.avi'
+        print(f'Creating video {video_path}')
+        common_utils.create_video(self.images_output_folder_with_data, 'jpg', video_path, frame_rate)
+        print(f'Finised creating video {video_path}')
+
+        if self.create_gif_video:
+            gif_video_path = self.videos_output_folder_with_data + '/' + video_name + '.gif'
+            print(f'Creating gif video {gif_video_path}')
+            videoClip = VideoFileClip(video_path)
+            videoClip.write_gif(gif_video_path)
+            print(f'Finished creating gif video {gif_video_path}')
+
     def increase_frame_index(self):
         self.frame_index += 1
         self.frame_index_only_increasing += 1
@@ -966,7 +981,7 @@ class DarkRoom:
                 self.frame_index = 0
 
     def move_robot_through_all_cameras(self):
-        for i in range(0, 3000):
+        for i in range(0, 1000):
             self.continue_straight_text = ""
             self.all_cameras_frames, self.all_cameras_frames_with_frame_index = self.get_cameras_frames(self.frame_index)
             self.is_robot_found_by_aruco, robot_positions_in_all_cameras_by_aruco, robot_unit_directions_in_all_cameras_by_aruco = self.get_robot_data_for_all_cameras_by_aruco(self.all_cameras_frames)
