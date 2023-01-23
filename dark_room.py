@@ -50,9 +50,8 @@ class DarkRoom:
 
         self.frame_index = 0
         self.frame_index_only_increasing = 0
-        self.sim_with_room_frame = True
+        self.simulate_cameras = True
         self.work_with_real_robot = False
-        self.use_time_sleep = not self.sim_with_room_frame
         self.main_output_folder = './autonomic_driving_output'
         self.path4simframes = './videos_and_images/images/'
         self.max_eps = 80
@@ -206,7 +205,7 @@ class DarkRoom:
         return vcap
 
     def initialize_vcaps(self):
-        if self.sim_with_room_frame:
+        if self.simulate_cameras:
             vCaps = [0, 0, 0, 0]
         else:
             vCaps = self.init_ip_cam(self.cameras_names, self.cameras_IPs)
@@ -235,7 +234,7 @@ class DarkRoom:
 
     def create_simulated_frames_indexes(self, first_frame_index=430, step=20):
         simulated_frames_indexes = []
-        if self.sim_with_room_frame:
+        if self.simulate_cameras:
             self.min_num_of_frames = self.get_min_num_of_frames_for_simulation()
             simulated_frames_indexes = np.arange(first_frame_index, self.min_num_of_frames, step)
         return simulated_frames_indexes
@@ -263,7 +262,7 @@ class DarkRoom:
         cameras_frames_with_data = [None] * num_of_cameras
         for camera_index in range(0, num_of_cameras):
             camera_name = self.cameras_names[camera_index]
-            if self.sim_with_room_frame:
+            if self.simulate_cameras:
                 frame, frame_with_data = self.get_simulated_frame(camera_name, frame_index, self.simulated_frames_indexes)
                 cameras_frames_with_data[camera_index] = frame_with_data
             else:
@@ -624,8 +623,6 @@ class DarkRoom:
             return
         next_waypoint = waypoints[self.next_waypoint_index]
         eps = self.get_eps(next_waypoint, self.robot_current_position)
-        if self.use_time_sleep:
-            time.sleep(0.1)
         direction_from_robot_to_next_waypoint = next_waypoint - self.robot_current_position
         azimuth = self.get_azimuth(self.robot_current_unit_direction, direction_from_robot_to_next_waypoint)
         self.move_robot(azimuth=azimuth, dist_in_pixels=eps)
@@ -976,7 +973,7 @@ class DarkRoom:
     def increase_frame_index(self):
         self.frame_index += 1
         self.frame_index_only_increasing += 1
-        if self.sim_with_room_frame:
+        if self.simulate_cameras:
             if self.frame_index == len(self.simulated_frames_indexes):
                 self.frame_index = 0
 
